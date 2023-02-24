@@ -16,6 +16,7 @@
  (synopsis "Dune's monadic structured concurrency library")
  (depends
   (ocaml (>= 4.08))
+  (ppx_expect :with-test)
   dyn
   stdune))
 
