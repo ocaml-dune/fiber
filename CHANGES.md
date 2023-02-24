@@ -1,5 +1,7 @@
 # Unreleased
 
+- Add [Fiber.map_reduce_seq] (#14, @rgrinberg)
+
 - Make [Fiber.both] concurrent (#32, @rgrinberg)
 
 - Add [Fiber.Lazy] (#36, #rleshchinskiy)
