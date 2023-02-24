@@ -62,50 +62,53 @@ type 'a step =
 
 let rec loop : Jobs.t -> step' = function
   | Empty -> Stalled
-  | Job (ctx, run, x, jobs) -> run_k ctx run x jobs
+  | Job (ctx, run, x, jobs) -> exec ctx run x jobs
   | Concat (a, b) -> loop2 a b
 
 and loop2 a b =
   match a with
   | Empty -> loop b
-  | Job (ctx, run, x, a) -> run_k ctx run x (Jobs.concat a b)
+  | Job (ctx, run, x, a) -> exec ctx run x (Jobs.concat a b)
   | Concat (a1, a2) -> loop2 a1 (Jobs.concat a2 b)
 
-and exec : context -> eff -> Jobs.t -> step' =
- fun ctx x jobs ->
-  match x with
+and exec : 'a. context -> ('a -> eff) -> 'a -> Jobs.t -> step' =
+ fun ctx k x jobs ->
+  match k x with
+  | exception exn ->
+    let exn = Exn_with_backtrace.capture exn in
+    exec ctx.on_error.ctx ctx.on_error.run exn jobs
   | Done v -> Done v
   | Toplevel_exception exn -> Exn_with_backtrace.reraise exn
-  | Unwind (k, x) -> run_k ctx.parent k x jobs
+  | Unwind (k, x) -> exec ctx.parent k x jobs
   | Read_ivar (ivar, k) -> (
     match ivar.state with
     | (Empty | Empty_with_readers _) as readers ->
       ivar.state <- Empty_with_readers (ctx, k, readers);
       loop jobs
-    | Full x -> run_k ctx k x jobs)
+    | Full x -> exec ctx k x jobs)
   | Fill_ivar (ivar, x, k) ->
     let jobs = Jobs.concat jobs (Jobs.fill_ivar ivar x Empty) in
-    run_k ctx k () jobs
+    exec ctx k () jobs
   | Suspend (f, k) ->
     let k = { ctx; run = k } in
     f k;
     loop jobs
   | Resume (suspended, x, k) ->
-    run_k ctx k ()
+    exec ctx k ()
       (Jobs.concat jobs (Job (suspended.ctx, suspended.run, x, Empty)))
-  | Get_var (key, k) -> run_k ctx k (Univ_map.find ctx.vars key) jobs
+  | Get_var (key, k) -> exec ctx k (Univ_map.find ctx.vars key) jobs
   | Set_var (key, x, k) ->
     let ctx = { ctx with parent = ctx; vars = Univ_map.set ctx.vars key x } in
-    run_k ctx k () jobs
+    exec ctx k () jobs
   | Unset_var (key, k) ->
     let ctx = { ctx with parent = ctx; vars = Univ_map.remove ctx.vars key } in
-    run_k ctx k () jobs
+    exec ctx k () jobs
   | With_error_handler (on_error, k) ->
     let on_error =
       { ctx; run = (fun exn -> on_error exn Nothing.unreachable_code) }
     in
     let ctx = { ctx with parent = ctx; on_error } in
-    run_k ctx k () jobs
+    exec ctx k () jobs
   | Map_reduce_errors (m, on_error, f, k) ->
     map_reduce_errors ctx m on_error f k jobs
   | End_of_fiber () ->
@@ -116,17 +119,17 @@ and exec : context -> eff -> Jobs.t -> step' =
     let ref_count = r.ref_count - 1 in
     r.ref_count <- ref_count;
     assert (ref_count = 0);
-    run_k ctx.parent k x jobs
+    exec ctx.parent k x jobs
   | End_of_map_reduce_error_handler map_reduce_context ->
     deref map_reduce_context jobs
   | Never () -> loop jobs
   | Fork (a, b) ->
     let (Map_reduce_context r) = ctx.map_reduce_context in
     r.ref_count <- r.ref_count + 1;
-    exec ctx a (Job (ctx, b, (), jobs))
+    exec ctx Fun.id a (Job (ctx, b, (), jobs))
   | Reraise exn ->
     let { ctx; run } = ctx.on_error in
-    run_k ctx run exn jobs
+    exec ctx run exn jobs
   | Reraise_all exns -> (
     match length_and_rev exns with
     | 0, _ -> loop jobs
@@ -140,20 +143,12 @@ and exec : context -> eff -> Jobs.t -> step' =
       in
       loop jobs)
 
-and run_k : 'a. context -> ('a -> eff) -> 'a -> Jobs.t -> step' =
- fun ctx k x jobs ->
-  match k x with
-  | s -> exec ctx s jobs
-  | exception exn ->
-    let exn = Exn_with_backtrace.capture exn in
-    run_k ctx.on_error.ctx ctx.on_error.run exn jobs
-
 and deref : 'a 'b. ('a, 'b) map_reduce_context' -> Jobs.t -> step' =
  fun r jobs ->
   let ref_count = r.ref_count - 1 in
   r.ref_count <- ref_count;
   match ref_count with
-  | 0 -> run_k r.k.ctx r.k.run (Error r.errors) jobs
+  | 0 -> exec r.k.ctx r.k.run (Error r.errors) jobs
   | _ ->
     assert (ref_count > 0);
     loop jobs
@@ -187,7 +182,7 @@ and map_reduce_errors :
     ; map_reduce_context = Map_reduce_context map_reduce_context
     }
   in
-  run_k ctx f () jobs
+  exec ctx f () jobs
 
 let repack_step (type a) (module W : Witness with type t = a) (step' : step') =
   match step' with
@@ -221,4 +216,4 @@ let start (type a) (t : a t) =
           }
     }
   in
-  run_k ctx t (fun x -> Done (W.X x)) Empty |> repack_step (module W)
+  exec ctx t (fun x -> Done (W.X x)) Empty |> repack_step (module W)
