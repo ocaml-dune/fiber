@@ -20,7 +20,7 @@
             src = ./.;
             duneVersion = "3";
             propagatedBuildInputs = with pkgs.ocamlPackages; [ dyn stdune ];
-            checkInputs = with pkgs.ocamlPackages; [ ppx_inline_test ppx_expect ];
+            checkInputs = with pkgs.ocamlPackages; [ ppx_inline_test ppx_bench core_bench ppx_expect ];
             doCheck = true;
           };
           fiber-lwt = buildDunePackage {
