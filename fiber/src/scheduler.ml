@@ -22,10 +22,7 @@ module Jobs = struct
 
   let fill_ivar ivar x jobs =
     match ivar.state with
-    | Full _ ->
-      let exn = Failure "Ivar.fill" in
-      let backtrace = ivar.source in
-      Exn_with_backtrace.reraise { Exn_with_backtrace.backtrace; exn }
+    | Full _ -> failwith "Fiber.Ivar.fill"
     | Empty ->
       ivar.state <- Full x;
       jobs

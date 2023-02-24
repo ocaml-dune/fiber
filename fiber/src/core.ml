@@ -32,10 +32,7 @@ and eff =
   | Toplevel_exception : Exn_with_backtrace.t -> eff
   | Done of value
 
-and 'a ivar =
-  { mutable state : ('a, [ `Full | `Empty ]) ivar_state
-  ; source : Printexc.raw_backtrace
-  }
+and 'a ivar = { mutable state : ('a, [ `Full | `Empty ]) ivar_state }
 
 and ('a, _) ivar_state =
   | Full : 'a -> ('a, [> `Full ]) ivar_state
@@ -213,9 +210,7 @@ let reraise_all l _k =
 module Ivar = struct
   type 'a t = 'a ivar
 
-  let create () =
-    let source = Printexc.get_callstack 20 in
-    { state = Empty; source }
+  let create () = { state = Empty }
 
   let read t k = Read_ivar (t, k)
 
