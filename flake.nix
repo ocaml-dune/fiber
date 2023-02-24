@@ -1,5 +1,5 @@
 {
-  description = "Piaf Nix Flake";
+  description = "Fiber Nix Flake";
 
   inputs.nix-filter.url = "github:numtide/nix-filter";
   inputs.flake-utils.url = "github:numtide/flake-utils";
