@@ -350,21 +350,6 @@ let rec sequential_iter_seq (seq : _ Seq.t) ~f =
     let* () = f x in
     sequential_iter_seq seq ~f
 
-let map_reduce_seq (type a b) (seq : a Seq.t) ~f
-    (module Monoid : Monoid with type t = b) k =
-  match seq () with
-  | Seq.Nil -> k Monoid.empty
-  | Cons (x, xs) ->
-    let current = ref Monoid.empty in
-    let running = ref 1 in
-    let f a =
-      f a (fun b ->
-          current := Monoid.combine !current b;
-          decr running;
-          if !running = 0 then k !current else end_of_fiber)
-    in
-    nfork_seq running x xs f
-
 let parallel_iter_set (type a s)
     (module S : Set.S with type elt = a and type t = s) set ~(f : a -> unit t) =
   parallel_iter_seq (S.to_seq set) ~f

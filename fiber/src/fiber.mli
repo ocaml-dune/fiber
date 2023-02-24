@@ -282,9 +282,6 @@ end
 
 val repeat_while : f:('a -> 'a option t) -> init:'a -> unit t
 
-val map_reduce_seq :
-  'a Seq.t -> f:('a -> 'b t) -> (module Monoid with type t = 'b) -> 'b t
-
 module Stream : sig
   (** Destructive streams that can be composed to pipelines.
 
