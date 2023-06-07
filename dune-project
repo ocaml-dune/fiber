@@ -7,7 +7,7 @@
 (license MIT)
 (maintainers "Jane Street Group, LLC <opensource@janestreet.com>")
 (authors "Jane Street Group, LLC <opensource@janestreet.com>")
-(source (github ocaml/fiber))
+(source (github ocaml-dune/fiber))
 
 (implicit_transitive_deps false)
 
