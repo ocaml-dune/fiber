@@ -1,5 +1,3 @@
-open Stdune
-
 module Fiber_inside_lwt = struct
   let key = Fiber.Var.create ()
 

@@ -26,5 +26,4 @@
  (depends
   (ocaml (>= 4.08))
   lwt
-  stdune
   fiber))
