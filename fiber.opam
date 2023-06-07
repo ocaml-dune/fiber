@@ -4,8 +4,8 @@ synopsis: "Dune's monadic structured concurrency library"
 maintainer: ["Jane Street Group, LLC <opensource@janestreet.com>"]
 authors: ["Jane Street Group, LLC <opensource@janestreet.com>"]
 license: "MIT"
-homepage: "https://github.com/ocaml/fiber"
-bug-reports: "https://github.com/ocaml/fiber/issues"
+homepage: "https://github.com/ocaml-dune/fiber"
+bug-reports: "https://github.com/ocaml-dune/fiber/issues"
 depends: [
   "dune" {>= "3.6"}
   "ocaml" {>= "4.08"}
@@ -28,4 +28,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/ocaml/fiber.git"
+dev-repo: "git+https://github.com/ocaml-dune/fiber.git"
