@@ -1,5 +1,6 @@
 (library
  (name dune_fiber_tests)
+ (package fiber)
  (inline_tests)
  (libraries
   stdune
