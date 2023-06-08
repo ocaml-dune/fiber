@@ -349,18 +349,28 @@ let parallel_iter_set (type a s)
     (module S : Set.S with type elt = a and type t = s) set ~(f : a -> unit t) =
   parallel_iter_seq (S.to_seq set) ~f
 
-module Make_map_traversals (Map : Map.S) = struct
-  let parallel_iter t ~f =
-    parallel_iter_seq (Map.to_seq t) ~f:(fun (k, v) -> f k v)
+module Make_parallel_map (S : sig
+  type 'a t
 
+  type key
+
+  val empty : _ t
+
+  val is_empty : _ t -> bool
+
+  val to_list : 'a t -> (key * 'a) list
+
+  val mapi : 'a t -> f:(key -> 'a -> 'b) -> 'b t
+end) =
+struct
   let parallel_map t ~f =
-    if Map.is_empty t then return Map.empty
+    if S.is_empty t then return S.empty
     else
       let+ a =
-        parallel_array_of_list_map (Map.to_list t) ~f:(fun (k, v) -> f k v)
+        parallel_array_of_list_map (S.to_list t) ~f:(fun (k, v) -> f k v)
       in
       let pos = ref 0 in
-      Map.mapi t ~f:(fun _ _ ->
+      S.mapi t ~f:(fun _ _ ->
           let i = !pos in
           pos := i + 1;
           a.(i))

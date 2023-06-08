@@ -151,17 +151,18 @@ let%bench_fun "Fiber.Pool.run - small" =
   let l = List.init 2 ~f:Fun.id in
   fun () -> pool_run l
 
-module M = Fiber.Make_map_traversals (Int.Map)
+module M = Fiber.Make_parallel_map (Int.Map)
 
 let map =
   List.init 1000 ~f:Fun.id
   |> List.map ~f:(fun i -> (i, i))
   |> Int.Map.of_list_exn
 
-let%bench "Fiber.Map.parallel_iter" =
+let%bench "Fiber.parallel_iter_seq" =
   Fiber.run
     ~iter:(fun () -> assert false)
-    (M.parallel_iter map ~f:(fun _ _ -> Fiber.return ()))
+    (Fiber.parallel_iter_seq (Int.Map.to_seq map) ~f:(fun (_, _) ->
+         Fiber.return ()))
 
 let%bench "Fiber.Map.parallel_map" =
   Fiber.run
