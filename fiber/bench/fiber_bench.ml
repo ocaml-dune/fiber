@@ -16,19 +16,13 @@ let%bench_fun "bind" =
 let%bench_fun "create ivar and immediately read" =
  fun () ->
   let ivar = Fiber.Ivar.create () in
-  Fiber.run
-    ~iter:(fun () ->
-      let open Nonempty_list in
-      [ Fiber.Fill (ivar, ()) ])
-    (Fiber.Ivar.read ivar)
+  Fiber.run ~iter:(fun () -> [ Fiber.Fill (ivar, ()) ]) (Fiber.Ivar.read ivar)
 
 let%bench_fun "ivar" =
  fun () ->
   let ivar = ref (Fiber.Ivar.create ()) in
   Fiber.run
-    ~iter:(fun () ->
-      let open Nonempty_list in
-      [ Fiber.Fill (!ivar, ()) ])
+    ~iter:(fun () -> [ Fiber.Fill (!ivar, ()) ])
     (let rec loop = function
        | 0 -> Fiber.return ()
        | n ->

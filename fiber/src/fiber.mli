@@ -397,7 +397,7 @@ type fill = Fill : 'a Ivar.t * 'a -> fill
 (** [run t ~iter] runs a fiber until it terminates. [iter] is used to implement
     the scheduler, it should block waiting for an event and return at least one
     ivar to fill. *)
-val run : 'a t -> iter:(unit -> fill Nonempty_list.t) -> 'a
+val run : 'a t -> iter:(unit -> fill list) -> 'a
 
 (** Advanced fiber execution *)
 module Scheduler : sig
@@ -415,7 +415,7 @@ module Scheduler : sig
 
   (** Advance a stalled fiber as much as possible by filling a list of ivars.
       Once must call [advance] on a given [stalled] value only once. *)
-  val advance : 'a stalled -> fill Nonempty_list.t -> 'a step
+  val advance : 'a stalled -> fill list -> 'a step
 end
 
 (** {1 Fiber cancellation} *)
