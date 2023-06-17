@@ -107,8 +107,8 @@ let rec nfork x l f =
   match l with
   | [] -> f x
   | y :: l -> (
-    (* Manuall inline [fork] manually because the compiler is unfortunately not
-       getting rid of the closures. *)
+    (* Manually inline [fork] because the compiler is unfortunately
+       not getting rid of the closures. *)
     match apply f x with
     | End_of_fiber () -> nfork y l f
     | eff -> Fork (eff, fun () -> nfork y l f))
