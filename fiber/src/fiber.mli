@@ -121,7 +121,6 @@ module Make_parallel_map (S : sig
 end) : sig
   val parallel_map : 'a S.t -> f:(S.key -> 'a -> 'b t) -> 'b S.t t
 end
-[@@inline always]
 
 (** {1 Local storage} *)
 
