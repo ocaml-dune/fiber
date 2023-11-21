@@ -7,6 +7,9 @@
   parallel iteration is still available via `parallel_iter_seq`. (#22,
   @rgrinberg)
 
+- Remove `Nonempty_list` from the scheduler API. It's replaced with a regular
+  list and there's no issues with providing an empty list (#19, @rgrinberg)
+
 # 3.7.0
 
 - Initial release
