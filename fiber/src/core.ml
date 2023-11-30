@@ -386,26 +386,21 @@ let rec repeat_while : 'a. f:('a -> 'a option t) -> init:'a -> unit t =
 
 module Exns = Monoid.Appendable_list (Exn_with_backtrace)
 
+let collect_errors_appendable_list =
+  let on_error e = return (Appendable_list.singleton e) in
+  fun f -> map_reduce_errors (module Exns) f ~on_error
+
 let collect_errors f =
-  let+ res =
-    map_reduce_errors
-      (module Exns)
-      f
-      ~on_error:(fun e -> return (Appendable_list.singleton e))
-  in
-  match res with
-  | Ok x -> Ok x
+  collect_errors_appendable_list f >>| function
+  | Ok _ as x -> x
   | Error l -> Error (Appendable_list.to_list l)
 
-let finalize f ~finally =
-  let* res1 = collect_errors f in
-  let* res2 = collect_errors finally in
-  let res =
+let finalize =
+  let reraise_all x = reraise_all (Appendable_list.to_list x) in
+  fun f ~finally ->
+    let* res1 = collect_errors_appendable_list f in
+    let* res2 = collect_errors_appendable_list finally in
     match (res1, res2) with
-    | Ok x, Ok () -> Ok x
-    | Error l, Ok _ | Ok _, Error l -> Error l
-    | Error l1, Error l2 -> Error (l1 @ l2)
-  in
-  match res with
-  | Ok x -> return x
-  | Error l -> reraise_all l
+    | Ok x, Ok () -> return x
+    | Error l, Ok _ | Ok _, Error l -> reraise_all l
+    | Error l1, Error l2 -> reraise_all (Appendable_list.( @ ) l1 l2)
