@@ -9,12 +9,13 @@ let%expect_test "test fiber scheduler" =
     print_endline "ivar filled"
   in
   (match Scheduler.start (Fiber.of_thunk f) with
-  | Done _ -> assert false
-  | Stalled s -> (
-    let step = Scheduler.advance s [ Fiber.Fill (ivar, ()) ] in
-    match step with
-    | Done () -> ()
-    | Stalled _ -> assert false));
+   | Done _ -> assert false
+   | Stalled s ->
+     let step = Scheduler.advance s [ Fiber.Fill (ivar, ()) ] in
+     (match step with
+      | Done () -> ()
+      | Stalled _ -> assert false));
   [%expect {|
     waiting for ivar
     ivar filled |}]
+;;
