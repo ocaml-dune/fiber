@@ -260,9 +260,9 @@ end
 open O
 
 let both a b =
-  let* x = a in
-  let* y = b in
-  return (x, y)
+  let+ x = a
+  and+ y = b in
+  x, y
 ;;
 
 let sequential_map l ~f =

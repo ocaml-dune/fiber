@@ -1,6 +1,8 @@
 # Unreleased
 
-- Add [Fiber.Lazy]
+- Make [Fiber.both] concurrent (#32, @rgrinberg)
+
+- Add [Fiber.Lazy] (#36, #rleshchinskiy)
 
 - Rename `Fiber.Pool.stop` to `Fiber.Pool.close` (#13, @rgrinberg)
 
