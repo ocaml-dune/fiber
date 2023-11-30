@@ -384,8 +384,9 @@ let rec repeat_while : 'a. f:('a -> 'a option t) -> init:'a -> unit t =
   | None -> return ()
   | Some init -> repeat_while ~f ~init
 
+module Exns = Monoid.Appendable_list (Exn_with_backtrace)
+
 let collect_errors f =
-  let module Exns = Monoid.Appendable_list (Exn_with_backtrace) in
   let+ res =
     map_reduce_errors
       (module Exns)
