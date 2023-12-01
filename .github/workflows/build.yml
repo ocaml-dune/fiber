@@ -13,4 +13,4 @@ jobs:
     - name: "Run nix flake check"
       run: nix flake check
     - name: "Run nix build"
-      run: nix build -L .#fiber{,-lwt}
+      run: nix build -L .#fiber{,-lwt,_4_08,_4_09,_4_10,_4_11,_4_12,_4_13,_4_14,_5_0,5_1}
