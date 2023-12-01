@@ -46,10 +46,11 @@
           fiber_5_1 = buildFiber pkgs.ocaml-ng.ocamlPackages_5_1;
         };
         devShells.default = pkgs.mkShell {
-          inputsFrom = pkgs.lib.attrValues packages;
-          buildInputs = with pkgs.ocamlPackages; [
-            ocaml-lsp
-            pkgs.ocamlformat_0_26_1
+          buildInputs = [
+            packages.fiber
+            packages.fiber-lwt
+            pkgs.ocamlPackages.ocaml-lsp
+            pkgs.ocamlPackages.ocamlformat_0_26_1
           ];
         };
       });
