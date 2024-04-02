@@ -1,5 +1,7 @@
 # Unreleased
 
+- Add [Fiber.Lazy]
+
 - Rename `Fiber.Pool.stop` to `Fiber.Pool.close` (#13, @rgrinberg)
 
 - Remove `Make_map_traversals` and introduce `Make_parallel_map`. The new
