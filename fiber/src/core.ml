@@ -391,30 +391,28 @@ let rec repeat_while : 'a. f:('a -> 'a option t) -> init:'a -> unit t =
   | Some init -> repeat_while ~f ~init
 ;;
 
-module Exns = Monoid.Appendable_list (Exn_with_backtrace)
+module Exns = struct
+  include Monoid.Appendable_list (Exn_with_backtrace)
+
+  let reraise_all (exns : t) = reraise_all (Appendable_list.to_list exns)
+end
+
+let collect_errors_appendable_list f =
+  map_reduce_errors
+    (module Exns)
+    f
+    ~on_error:(fun e -> return (Appendable_list.singleton e))
+;;
 
 let collect_errors f =
-  let+ res =
-    map_reduce_errors
-      (module Exns)
-      f
-      ~on_error:(fun e -> return (Appendable_list.singleton e))
-  in
-  match res with
-  | Ok x -> Ok x
-  | Error l -> Error (Appendable_list.to_list l)
+  collect_errors_appendable_list f >>| Result.map_error ~f:Appendable_list.to_list
 ;;
 
 let finalize f ~finally =
-  let* res1 = collect_errors f in
-  let* res2 = collect_errors finally in
-  let res =
-    match res1, res2 with
-    | Ok x, Ok () -> Ok x
-    | Error l, Ok _ | Ok _, Error l -> Error l
-    | Error l1, Error l2 -> Error (l1 @ l2)
-  in
-  match res with
-  | Ok x -> return x
-  | Error l -> reraise_all l
+  let* res1 = collect_errors_appendable_list f in
+  let* res2 = collect_errors_appendable_list finally in
+  match res1, res2 with
+  | Ok x, Ok () -> return x
+  | Error l, Ok _ | Ok _, Error l -> Exns.reraise_all l
+  | Error l1, Error l2 -> Exns.reraise_all (Exns.combine l1 l2)
 ;;
