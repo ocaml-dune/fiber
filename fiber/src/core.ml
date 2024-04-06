@@ -350,6 +350,21 @@ let rec sequential_iter_seq (seq : _ Seq.t) ~f =
     sequential_iter_seq seq ~f
 ;;
 
+let map_reduce_seq (seq : _ Seq.t) ~f ~empty ~commutative_combine k =
+  match seq () with
+  | Seq.Nil -> k empty
+  | Cons (x, xs) ->
+    let current = ref empty in
+    let running = ref 1 in
+    let f a =
+      f a (fun b ->
+        current := commutative_combine !current b;
+        decr running;
+        if !running = 0 then k !current else end_of_fiber)
+    in
+    nfork_seq running x xs f
+;;
+
 let parallel_iter_set
   (type a s)
   (module S : Set.S with type elt = a and type t = s)
