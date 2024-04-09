@@ -74,9 +74,14 @@ and loop2 a b =
 and exec : 'a. context -> ('a -> eff) -> 'a -> Jobs.t -> step' =
   fun ctx k x jobs ->
   match k x with
+  | eff -> exec_eff ctx eff jobs
   | exception exn ->
     let exn = Exn_with_backtrace.capture exn in
     exec ctx.on_error.ctx ctx.on_error.run exn jobs
+
+and exec_eff : 'a. context -> 'eff -> Jobs.t -> step' =
+  fun ctx x jobs ->
+  match x with
   | Done v -> Done v
   | Toplevel_exception exn -> Exn_with_backtrace.reraise exn
   | Unwind (k, x) -> exec ctx.parent k x jobs
@@ -121,7 +126,7 @@ and exec : 'a. context -> ('a -> eff) -> 'a -> Jobs.t -> step' =
   | Fork (a, b) ->
     let (Map_reduce_context r) = ctx.map_reduce_context in
     r.ref_count <- r.ref_count + 1;
-    exec ctx Fun.id a (Job (ctx, b, (), jobs))
+    exec_eff ctx a (Job (ctx, b, (), jobs))
   | Reraise exn ->
     let { ctx; run } = ctx.on_error in
     exec ctx run exn jobs
